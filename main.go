@@ -44,7 +44,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-
+	"encoding/base64"
 	gomail "gopkg.in/gomail.v2"
 )
 
@@ -539,12 +539,20 @@ func parseBodyCommandParams(args []string, command string) int {
 			content := readFile(args[i])
 			body.content = string(content)
 			j = i
-		} else if arg == "-m" || arg == "-msg" || arg == "-message" || arg == "--m" || arg == "--msg" || arg == "--message" {
+		} else if arg == "-m" || arg == "-msg" || arg == "-message" || arg == "--m64" || arg == "--msg" || arg == "--message" {
 			i++
 			if i == argc {
 				fatalError("Missing value with %s for command %s\n", arg, command)
 			}
-			body.content = args[i]
+			if arg == "--m64" {
+				decodedContent, err := base64.StdEncoding.DecodeString(args[i])
+				if err != nil {
+					fatalError("Failed to decode base64 content for %s: %v\n", arg, err)
+				}
+				body.content = string(decodedContent)
+			} else {
+				body.content = args[i]
+			}
 			j = i
 		} else if arg == "-mime-type" || arg == "--mime-type" {
 			i++
